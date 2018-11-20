@@ -9,6 +9,7 @@ import nixops.resources
 import tempfile
 import shutil
 import subprocess
+from typing import Any, Optional, List, Dict, AnyStr, Tuple
 
 class OutputDefinition(nixops.resources.ResourceDefinition):
     """Definition of an Output."""
@@ -24,7 +25,7 @@ class OutputDefinition(nixops.resources.ResourceDefinition):
         return "output"
 
     def __init__(self, xml):
-        # type: (xml.etree.ElementTree.Element) -> None
+        # type: (Any) -> None
         nixops.resources.ResourceDefinition.__init__(self, xml)
         self.script = xml.find("attrs/attr[@name='script']/string").get("value")
         self.name = xml.find("attrs/attr[@name='name']/string").get("value")
@@ -55,18 +56,20 @@ class OutputState(nixops.resources.ResourceState):
             return None
 
     def __init__(self, depl, name, id):
-        # type: (nixops.deployment.Deployment,str,int) -> None
+        # type: (Any,str,int) -> None
+        # Any is: nixops.deployment.Deployment
         self.id = id
         nixops.resources.ResourceState.__init__(self, depl, name, id)
 
     def create(self, defn, check, allow_reboot, allow_recreate):
-        # type: (nixops.resources.output.OutputDefinision,bool,bool,bool) -> None
+        # type: (Any,bool,bool,bool) -> None
+        # Any is: nixops.resources.output.OutputDefinision
         if (self.script != defn.script) or self.value is None:
             self.name = defn.name
             try:
                 output_dir = tempfile.mkdtemp(prefix="nixops-output-tmp")
                 self.log("Running shell function for output ‘{0}’...".format(defn.name))
-                env = {}
+                env = {} # type: Dict[str,str]
                 env.update(os.environ)
                 env.update({"out":output_dir})
                 res = subprocess.check_output(
@@ -81,11 +84,11 @@ class OutputState(nixops.resources.ResourceState):
                 shutil.rmtree(output_dir)
 
     def prefix_definition(self, attr):
-        # type: (Dict[str,Any]) -> Dict[str,Any]
+        # type: (Dict[str,Any]) -> Dict[Tuple[str,str],Any]
         return {('resources', 'output'): attr}
 
     def get_physical_spec(self):
-        # type: () -> (Optional[str])
+        # type: () -> Dict[str,Any]
         return {'value': self.value}
 
     def destroy(self, wipe=False):

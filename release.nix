@@ -5,7 +5,7 @@
 
 let
   pkgs = import nixpkgs { };
-  version = "1.6" + (if officialRelease then "" else "pre${toString nixopsSrc.revCount}_${nixopsSrc.shortRev}");
+  version = "1.6.1" + (if officialRelease then "" else "pre${toString nixopsSrc.revCount}_${nixopsSrc.shortRev}");
 
 in
 
@@ -70,9 +70,8 @@ rec {
   build = pkgs.lib.genAttrs [ "x86_64-linux" "i686-linux" "x86_64-darwin" ] (system:
     with import nixpkgs { inherit system; };
 
-    python2Packages.buildPythonPackage rec {
+    python2Packages.buildPythonApplication rec {
       name = "nixops-${version}";
-      namePrefix = "";
 
       src = "${tarball}/tarballs/*.tar.bz2";
 
@@ -110,7 +109,7 @@ rec {
 
       # Add openssh to nixops' PATH. On some platforms, e.g. CentOS and RHEL
       # the version of openssh is causing errors when have big networks (40+)
-      makeWrapperArgs = ["--prefix" "PATH" ":" "${openssl}/bin" "--set" "PYTHONPATH" ":"];
+      makeWrapperArgs = ["--prefix" "PATH" ":" "${openssh}/bin" "--set" "PYTHONPATH" ":"];
 
       postInstall =
         ''

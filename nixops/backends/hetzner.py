@@ -170,14 +170,14 @@ class HetznerState(MachineState):
             ["-o", "LogLevel=quiet",
              "-o", "UserKnownHostsFile=/dev/null",
              "-o", "GlobalKnownHostsFile=/dev/null",
-             "-o", "StrictHostKeyChecking=no"]
+             "-o", "StrictHostKeyChecking=accept-new"]
             if self.state == self.RESCUE else
             # XXX: Disabling strict host key checking will only impact the
             # behaviour on *new* keys, so it should be "reasonably" safe to do
             # this until we have a better way of managing host keys in
             # ssh_util. So far this at least avoids to accept every damn host
             # key on a large deployment.
-            ["-o", "StrictHostKeyChecking=no",
+            ["-o", "StrictHostKeyChecking=accept-new",
              "-i", self.get_ssh_private_key_file()]
         )
 
@@ -399,7 +399,7 @@ class HetznerState(MachineState):
         cmd = "nixos-generate-config --no-filesystems --show-hardware-config"
         hardware = self.run_command(cmd, capture_stdout=True)
         self.hw_info = '\n'.join([line for line in hardware.splitlines()
-                                  if not line.rstrip().startswith('#')])
+                                  if not line.lstrip().startswith('#')])
         self.log_end("done.")
 
     def switch_to_configuration(self, method, sync, command=None):
