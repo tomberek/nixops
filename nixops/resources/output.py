@@ -10,7 +10,13 @@ import tempfile
 import shutil
 import subprocess
 import hashlib
-from typing import Any, Optional, List, Dict, AnyStr, Tuple
+
+
+# For typing
+from nixops.deployment import Deployment
+from xml.etree.ElementTree import Element
+from nixops.nix_expr import Function
+from typing import Optional, List, Dict, Tuple
 
 class OutputDefinition(nixops.resources.ResourceDefinition):
     """Definition of an Output."""
@@ -26,10 +32,12 @@ class OutputDefinition(nixops.resources.ResourceDefinition):
         return "output"
 
     def __init__(self, xml):
-        # type: (Any) -> None
+        # type: (Element) -> None
         nixops.resources.ResourceDefinition.__init__(self, xml)
-        self.script = xml.find("attrs/attr[@name='script']/string").get("value")
-        self.name = xml.find("attrs/attr[@name='name']/string").get("value")
+        temp = xml.find("attrs/attr[@name='script']/string")
+        self.script = temp.get("value") if temp is not None else ""
+        temp = xml.find("attrs/attr[@name='name']/string")
+        self.name = temp.get("value") if temp is not None else ""
 
     def show_type(self):
         # type: () -> (str)
@@ -57,15 +65,13 @@ class OutputState(nixops.resources.ResourceState):
             return None
 
     def __init__(self, depl, name, id):
-        # type: (Any,str,int) -> None
-        # Any is: nixops.deployment.Deployment
+        # type: (Deployment,str,int) -> None
         self.id = id
         nixops.resources.ResourceState.__init__(self, depl, name, id)
 
     def create(self, defn, check, allow_reboot, allow_recreate):
-        # type: (Any,bool,bool,bool) -> None
-        # Any is: nixops.resources.output.OutputDefinision
-        if (self.script != defn.script) or self.value is None:
+        # type: (OutputDefinition,bool,bool,bool) -> None
+        if (defn.script is not None ) and (self.script != defn.script) or self.value is None:
             self.name = defn.name
             try:
                 output_dir = tempfile.mkdtemp(prefix="nixops-output-tmp")
@@ -85,11 +91,11 @@ class OutputState(nixops.resources.ResourceState):
                 shutil.rmtree(output_dir)
 
     def prefix_definition(self, attr):
-        # type: (Dict[str,Any]) -> Dict[Tuple[str,str],Any]
+        # type: (Dict[str,Function]) -> Dict[Tuple[str,str],Dict[str,Function]]
         return {('resources', 'output'): attr}
 
     def get_physical_spec(self):
-        # type: () -> Dict[str,Any]
+        # type: () -> Dict[str,str]
         return {'value': self.value}
 
     def destroy(self, wipe=False):
