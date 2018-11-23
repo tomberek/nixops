@@ -9,6 +9,7 @@ import nixops.resources
 import tempfile
 import shutil
 import subprocess
+import hashlib
 from typing import Any, Optional, List, Dict, AnyStr, Tuple
 
 class OutputDefinition(nixops.resources.ResourceDefinition):
@@ -51,7 +52,7 @@ class OutputState(nixops.resources.ResourceState):
         # type: () -> Optional[str]
         if self.value is not None:
             # Avoid printing any potential secret information
-            return "{0}/{1}".format(self.name,hash(self.value))
+            return "{0}-{1}".format(self.name,hashlib.sha256(self.value).hexdigest()[:32])
         else:
             return None
 
