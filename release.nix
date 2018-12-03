@@ -77,6 +77,8 @@ rec {
 
       buildInputs = [ python2Packages.nose python2Packages.coverage ];
 
+      nativeBuildInputs = [ pkgs.mypy ];
+
       propagatedBuildInputs = with python2Packages;
         [ prettytable
           boto
@@ -104,6 +106,15 @@ rec {
       '';
 
       doCheck = true;
+
+      postCheck = ''
+        # We have to unset PYTHONPATH here since it will pick enum34 which collides
+        # with python3 own module. This can be removed when nixops is ported to python3.
+        PYTHONPATH= mypy --cache-dir=/dev/null nixops
+
+        # smoke test
+        HOME=$TMPDIR $out/bin/nixops --version
+      '';
 
       # Needed by libcloud during tests
       SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
