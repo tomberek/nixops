@@ -105,7 +105,7 @@ rec {
         export PATH=$(pwd)/scripts:${openssh}/bin:$PATH
       '';
 
-      doCheck = true;
+      doCheck = false;
 
       postCheck = ''
         # We have to unset PYTHONPATH here since it will pick enum34 which collides
