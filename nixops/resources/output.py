@@ -36,6 +36,8 @@ class OutputDefinition(nixops.resources.ResourceDefinition):
         nixops.resources.ResourceDefinition.__init__(self, xml)
         temp = xml.find("attrs/attr[@name='script']/string")
         self.script = temp.get("value") if temp is not None else ""
+        temp = xml.find("attrs/attr[@name='executable']/string")
+        self.executable = temp.get("value") if temp is not None else ""
         temp = xml.find("attrs/attr[@name='name']/string")
         self.name = temp.get("value") if temp is not None else ""
 
@@ -46,6 +48,7 @@ class OutputDefinition(nixops.resources.ResourceDefinition):
 class OutputState(nixops.resources.ResourceState):
     """State of an output."""
     state = nixops.util.attr_property("state", nixops.resources.ResourceState.MISSING, int)
+    executable = nixops.util.attr_property("executable",None)
     script = nixops.util.attr_property("script",None)
     value = nixops.util.attr_property("value",None)
     name =  nixops.util.attr_property("name",None)
@@ -80,9 +83,8 @@ class OutputState(nixops.resources.ResourceState):
                 env.update(os.environ)
                 env.update({"out":output_dir})
                 res = subprocess.check_output(
-                        [defn.script],
-                        env=env,
-                        shell=True)
+                        [defn.executable],
+                        env=env)
                 with self.depl._db:
                     self.value = res
                     self.state = self.UP
