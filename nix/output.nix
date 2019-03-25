@@ -19,6 +19,16 @@ with lib;
         <envar>$out</envar> is a temp directory available for use.
         '';
     };
+
+    executable = mkOption {
+      default = let temp = (pkgs.writeScript "testscript" "#!${pkgs.stdenv.shell}\n${config.script}").out;
+                in builtins.trace temp temp;
+      type = types.nullOr types.path;
+      description = ''
+        Executable to run for resource. Defaults to wrapping the script with stdenv.shell.
+        '';
+    };
+
     value = mkOption {
       default = null;
       type = types.nullOr types.str;
